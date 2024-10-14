@@ -2,12 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const userModel = require("./model/user");
-const feedModel = require("./model/feed");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-const user = require("./model/user");
+require("dotenv").config();  // Add this to use environment variables
 
 app.use(cors());
 app.use(express.json());
@@ -20,7 +19,7 @@ app.post("/register", async (req, res) => {
     const { email, password, username } = req.body;
 
     let user = await userModel.findOne({ email });
-    if (user) return res.status(400).send("Account already exists");
+    if (user) return res.status(400).json({ message: "Account already exists" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -31,9 +30,9 @@ app.post("/register", async (req, res) => {
       username,
     });
 
-    res.status(201).json(newUser);
+    res.status(201).json({ message: "User registered successfully", user: newUser });
   } catch (err) {
-    res.status(500).json({ message: "Error creating user", error: err });
+    res.status(500).json({ message: "Error creating user", error: err.message });
   }
 });
 
@@ -43,38 +42,38 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
     let user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(400).send("Invalid credentials");
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).send("Invalid credentials");
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
       { email: user.email, userid: user._id },
-      "gaharwarsinghyuvraj@123455",
-      { expiresIn: "0h" }
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }  // Set a valid expiration time
     );
 
     res.cookie("token", token, { httpOnly: true });
     res.status(200).json({ message: "Login successful" });
   } catch (err) {
-    res.status(500).json({ message: "Error logging in", error: err });
+    res.status(500).json({ message: "Error logging in", error: err.message });
   }
 });
 
 // Middleware to check if user is logged in
 function isLogin(req, res, next) {
   const token = req.cookies.token;
-  if (!token) return res.status(401).send("You must be logged in");
+  if (!token) return res.status(401).json({ message: "You must be logged in" });
 
   try {
-    const data = jwt.verify(token, "gaharwarsinghyuvraj@123455");
+    const data = jwt.verify(token, process.env.JWT_SECRET);
     req.user = data;
     next();
   } catch (err) {
-    res.status(401).send("Invalid token");
+    res.status(401).json({ message: "Invalid token" });
   }
 }
 
