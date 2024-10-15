@@ -10,7 +10,7 @@ const path = require("path");
 const user = require("./model/user");
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://deploy-mern-1whq.vercel.app"],
+  origin: "*",
   methods: ["POST", "GET"],
   credentials: true
 }));
