@@ -7,13 +7,15 @@ const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-const user = require("./model/user");
+const dotenv = require("dotenv");
 
-app.use(cors({
-  origin: "*",
-  methods: ["POST", "GET"],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["POST", "GET"],
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -59,7 +61,7 @@ app.post("/login", async (req, res) => {
     const token = jwt.sign(
       { email: user.email, userid: user._id },
       "gaharwarsinghyuvraj@123455",
-      { expiresIn: "0h" }
+      { expiresIn: "1h" }
     );
 
     res.cookie("token", token, { httpOnly: true });
@@ -88,5 +90,5 @@ app.get("/home", isLogin, (req, res) => {
 });
 
 app.listen(3001, () => {
-  console.log("Server running on port 3001");
+  console.log(`Server running on port 3001`);
 });
